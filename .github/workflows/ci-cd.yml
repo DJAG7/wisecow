@@ -40,6 +40,29 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v1
+        with:
+          version: 'v1.18.0'
+
+      - name: Deploy to Kubernetes
+        run: |
+          mkdir -p $HOME/.kube
+          echo ${{ secrets.KUBECONFIG_BASE64 }} | base64 --decode > $HOME/.kube/config
+          kubectl apply -f wisecow-deployment.yaml
+          kubectl apply -f wisecow-service.yaml
+        env:
+          KUBECONFIG: ~/.kube/config
+
+    
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
       
       - name: Load environment variables
         run: |
