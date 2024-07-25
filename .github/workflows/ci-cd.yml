@@ -40,20 +40,27 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+      
+      - name: Load environment variables
+        run: |
+          if [ -f $HOME/.env ]; then
+            export $(grep -v '^#' $HOME/.env | xargs);
+          fi
 
       - name: Set up kubectl
         uses: azure/setup-kubectl@v1
         with:
           version: 'v1.18.0'
 
+      - name: Print KUBEConfig Base64 to verify (temporary)
+        run: echo $KUBECONFIG_BASE64
+
       - name: Deploy to Kubernetes
         run: |
-          cat > $HOME/.kube/config <<EOF
-          $KUBECONFIG
-          EOF
+          mkdir -p $HOME/.kube
+          echo $KUBECONFIG_BASE64 | base64 --decode > $HOME/.kube/config
           kubectl apply -f wisecow-deployment.yaml
           kubectl apply -f wisecow-service.yaml
         env:
-          # Add any other necessary environment variables here
           KUBECONFIG: ~/.kube/config
 
