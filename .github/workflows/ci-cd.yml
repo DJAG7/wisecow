@@ -20,10 +20,7 @@ jobs:
 
       - name: Deploy to Kubernetes
         run: |
-          mkdir -p $HOME/.kube
-          echo ${{ secrets.KUBECONFIG }} | base64 --decode > $HOME/.kube/config
-          kubectl set image deployment/wisecow wisecow=djag7/wisecow:latest
           kubectl apply -f wisecow-deployment.yaml
           kubectl apply -f wisecow-service.yaml
         env:
-          KUBECONFIG: ~/.kube/config
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
