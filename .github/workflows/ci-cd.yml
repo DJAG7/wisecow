@@ -26,4 +26,4 @@ jobs:
           kubectl apply -f wisecow-deployment.yaml
           kubectl apply -f wisecow-service.yaml
         env:
-          KUBECONFIG: $HOME/.kube/config
+          KUBECONFIG: ~/.kube/config
