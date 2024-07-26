@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Deploy to Minikube
 
 on:
   push:
@@ -10,17 +10,72 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
 
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v1
-        with:
-          version: 'v1.18.0'
+    - name: Check if Kubectl is Installed
+      id: check-kubectl
+      run: |
+        if command -v kubectl &> /dev/null
+        then
+          echo "Kubectl is already installed"
+          echo "::set-output name=kubectl_installed::true"
+        else
+          echo "Kubectl is not installed"
+          echo "::set-output name=kubectl_installed::false"
+        fi
 
-      - name: Deploy to Kubernetes
-        run: |
-          kubectl apply -f wisecow-deployment.yaml
-          kubectl apply -f wisecow-service.yaml
-        env:
-          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+    - name: Set up Kubectl
+      if: steps.check-kubectl.outputs.kubectl_installed == 'false'
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'latest'
+
+    - name: Check if Minikube is Installed
+      id: check-minikube
+      run: |
+        if command -v minikube &> /dev/null
+        then
+          echo "Minikube is already installed"
+          echo "::set-output name=minikube_installed::true"
+        else
+          echo "Minikube is not installed"
+          echo "::set-output name=minikube_installed::false"
+        fi
+
+    - name: Install Minikube
+      if: steps.check-minikube.outputs.minikube_installed == 'false'
+      uses: manusa/actions-setup-minikube@v2.4.1
+      with:
+        minikube version: 'latest'
+        kubernetes version: 'v1.18.3'
+        driver: none
+
+    - name: Start Minikube
+      run: minikube start --driver=none
+
+    - name: Ensure Kubectl is Using Minikube Context
+      run: kubectl config use-context minikube
+
+    - name: Load environment variables
+      run: source wisecow/.env
+
+    - name: Create TLS Secret
+      run: |
+        openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout tls.key -out tls.crt -subj "/CN=wisecow.local/O=wisecow"
+        kubectl create secret tls wisecow-tls --key tls.key --cert tls.crt
+
+    - name: Deploy Wisecow Service
+      run: kubectl apply -f wisecow-service.yaml
+
+    - name: Deploy Wisecow Deployment
+      run: kubectl apply -f wisecow-deployment.yaml
+
+    - name: Deploy Wisecow Ingress
+      run: kubectl apply -f wisecow-ingress.yaml
+
+    - name: Get Minikube IP
+      run: |
+        minikube_ip=$(minikube ip)
+        echo "Minikube IP: $minikube_ip"
+        echo "::set-output name=minikube_ip::$minikube_ip"
