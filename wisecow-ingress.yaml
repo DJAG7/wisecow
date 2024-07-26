@@ -5,12 +5,8 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
 spec:
-  tls:
-  - hosts:
-    - wisecow.yourdomain.com
-    secretName: wisecow-tls
   rules:
-  - host: wisecow.yourdomain.com
+  - host: wisecow.local
     http:
       paths:
       - path: /
