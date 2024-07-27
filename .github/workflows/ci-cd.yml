@@ -13,49 +13,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Check if Kubectl is Installed
-      id: check-kubectl
-      run: |
-        if command -v kubectl &> /dev/null
-        then
-          echo "Kubectl is already installed"
-          echo "::set-output name=kubectl_installed::true"
-        else
-          echo "Kubectl is not installed"
-          echo "::set-output name=kubectl_installed::false"
-        fi
-
     - name: Set up Kubectl
       if: steps.check-kubectl.outputs.kubectl_installed == 'false'
       uses: azure/setup-kubectl@v3
       with:
         version: 'latest'
 
-    - name: Check if Minikube is Installed
-      id: check-minikube
-      run: |
-        if command -v minikube &> /dev/null
-        then
-          echo "Minikube is already installed"
-          echo "::set-output name=minikube_installed::true"
-        else
-          echo "Minikube is not installed"
-          echo "::set-output name=minikube_installed::false"
-        fi
-
-    - name: Install Minikube
-      if: steps.check-minikube.outputs.minikube_installed == 'false'
-      uses: manusa/actions-setup-minikube@v2.4.1
-      with:
-        minikube version: 'latest'
-        kubernetes version: 'v1.18.3'
-        driver: none
-
     - name: Start Minikube
       run: minikube start --driver=none
-
-    - name: Ensure Kubectl is Using Minikube Context
-      run: kubectl config use-context minikube
 
     - name: Load environment variables
       run: source wisecow/.env
