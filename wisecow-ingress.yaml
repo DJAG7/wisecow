@@ -4,9 +4,11 @@ metadata:
   name: wisecow-ingress
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"  # Redirect HTTP to HTTPS
 spec:
   rules:
   - host: wisecow.local
+    secretName: wisecow-tls  # Replace with TLS Cert location
     http:
       paths:
       - path: /
