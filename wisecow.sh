@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+#testing the application
 SRVPORT=4499
 RSPFILE=response
 
